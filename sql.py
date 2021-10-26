@@ -67,6 +67,14 @@ def importStock(ticker,coName,yahooUrl):
         cursor.execute("INSERT INTO stock VALUES (:ticker,:coName,:yahooUrl)",{'ticker': ticker, 'coName': coName,'yahooUrl': yahooUrl})
     conn.commit()
     cursor.close()
+def getStockTickersInPortfolio(portfolioId,watchlist):
+    conn = sqlite3.connect("stonks.db")
+    cursor = conn.cursor()
+    with conn:
+        portfolioInfo = cursor.execute("SELECT stockTicker FROM stockPortfolioTable WHERE portfolioId=:portfolioId AND watchlist=:watchlist", {'portfolioId': portfolioId, 'watchlist':watchlist}).fetchall()
+        return portfolioInfo
+    conn.commit()
+    cursor.close()
 def importStockPortfolioInfo(portfolioId,stockTicker,pricePaid,numberOfShares,watchlist):
     conn = sqlite3.connect("stonks.db")
     cursor = conn.cursor()
@@ -74,11 +82,27 @@ def importStockPortfolioInfo(portfolioId,stockTicker,pricePaid,numberOfShares,wa
         cursor.execute("INSERT INTO stockPortfolioTable VALUES (:portfolioId,:stockTicker,:pricePaid,:numberOfShares,:watchlist)",{'portfolioId': portfolioId, 'stockTicker': stockTicker,'pricePaid': pricePaid,'numberOfShares': numberOfShares,'watchlist':watchlist})
     conn.commit()
     cursor.close()
-def deleteRowFromStockPortfolioTable(ticker,portfolioId):
+def deleteRowFromStockPortfolioTable(ticker,portfolioId,watchlist):
     conn = sqlite3.connect("stonks.db")
     cursor = conn.cursor()
     with conn:
-        cursor.execute("DELETE FROM stock WHERE ticker=:ticker AND portfolioId=:portfolioId",{'ticker':ticker,'portfolioId':portfolioId})
+        cursor.execute("DELETE FROM stockPortfolioTable WHERE stockTicker=:ticker AND portfolioId=:portfolioId AND watchlist=:watchlist",{'ticker':ticker,'portfolioId':portfolioId,'watchlist':watchlist})
+    conn.commit()
+    cursor.close()
+def getAllStockPortfolioData(portfolioId,watchlist):
+    conn = sqlite3.connect("stonks.db")
+    cursor = conn.cursor()
+    with conn:
+        portfolioInfo = cursor.execute("SELECT * FROM stockPortfolioTable WHERE portfolioId=:portfolioId AND watchlist=:watchlist", {'portfolioId': portfolioId, 'watchlist':watchlist}).fetchall()
+        return portfolioInfo
+    conn.commit()
+    cursor.close()
+def getStockData(ticker):
+    conn = sqlite3.connect("stonks.db")
+    cursor = conn.cursor()
+    with conn:
+        stockInfo = cursor.execute("SELECT * FROM stock WHERE ticker=:ticker", {'ticker': ticker}).fetchone()
+        return stockInfo
     conn.commit()
     cursor.close()
 def deleteStockPortfolio(portfolioId):
@@ -86,7 +110,7 @@ def deleteStockPortfolio(portfolioId):
     cursor = conn.cursor()
     with conn:
         cursor.execute("DELETE FROM portfoliosUserTable WHERE portfolioId=:portfolioId",{'portfolioId':portfolioId})
-        cursor.execute("DELETE * FROM stockPortfolioTable WHERE portfolioId=:portfolioId",{'portfolioId':portfolioId})
+        cursor.execute("DELETE FROM stockPortfolioTable WHERE portfolioId=:portfolioId",{'portfolioId':portfolioId})
     conn.commit()
     cursor.close()
 def getUsersFirstName(username):
