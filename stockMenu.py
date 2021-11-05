@@ -42,7 +42,7 @@ def checkYahooUrl(yahooUrl):
         return 0
 def stockMenu(portfolioId,portfolioName):
     stockMenuLoopExitFlag = 0
-    from colorama import Fore,Back,Style
+    from colorama import Fore
     while stockMenuLoopExitFlag == 0:
         stockImportExitFlag = 0
         yahooChecker = 0

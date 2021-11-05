@@ -1,8 +1,7 @@
-import random
+
 import requests
 import time
-import math
-from colorama import Fore, Back, Style
+from colorama import Fore
 def getColor(value):
     if value < 0:
         return Fore.RED

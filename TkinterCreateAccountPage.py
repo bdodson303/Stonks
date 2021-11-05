@@ -1,11 +1,9 @@
 from tkinter import *
 from tkinter import messagebox
-import random
 import sql
 import stockMenu
 def createAccount():
     from PIL import ImageTk, Image
-    import Userlogin
     createAccountPage = Toplevel()
     createAccountPage.iconbitmap('BD(2).ico')
     createAccountPage.geometry('427x285')

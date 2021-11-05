@@ -4,17 +4,20 @@ from tkinter import ttk
 import ttkthemes
 from bs4 import BeautifulSoup
 import sql
+import concurrent.futures
 from tkinter import *
 from tkinter import messagebox
 from ttkthemes import themed_tk as tk
 from tkinter import ttk
 import yfinance as yf
-import Test
-from Test import ImageLabel
+import wolfImage
+import time
+from wolfImage import ImageLabel
 import editPortfolioButtons
 def stockPage(portfolio,username):
     progressBar = tk.ThemedTk()
     tkinterScroller = tk.ThemedTk()
+    start = time.perf_counter()
     progressBar.config(background="black")
 
     tkinterScroller.config(background="black")
@@ -30,7 +33,24 @@ def stockPage(portfolio,username):
         editPortfolioButtons.deleteStockPage(portfolioId,stockTickerList)
         refreshButtonClick()
     portfolioDataList= sql.getAllStockPortfolioData(portfolioId,'no')
-    #bubble sort this list ^
+    #want to grab all data here and then send it into the label printing loop
+    #we also want to bubble sort it so our list is ordered from worst performing to best
+    stockObjDict=[]
+    indexObjDict=[]
+    indexList=['^DJI','^IXIC']
+    def grabOpenAndClose(ticker):
+        stockInfo = yf.Ticker(ticker).info
+        return [stockInfo,ticker]
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = [executor.submit(grabOpenAndClose, stock[1]) for stock in portfolioDataList]
+        results2 = [executor.submit(grabOpenAndClose, index) for index in indexList]
+
+        for f in concurrent.futures.as_completed(results):
+            stockObjDict.append(f.result())
+        for f in concurrent.futures.as_completed(results2):
+            indexObjDict.append(f.result())
+    print(indexObjDict)
+    #now we will bubble sort the dictionaries
 
     counter = 1
     currentPortfolioValue = float(0)
@@ -45,35 +65,35 @@ def stockPage(portfolio,username):
     stockDaysChangeOnAccount = ttk.Label(tkinterScroller, text="Days $ Change on Portfolio", relief=RAISED,
                                          font="Cambria")
     stockName.grid(row=1, column=0, padx="5px")
-    stockTotalChangeLbl.grid(row=1,column=4)
-    stockDaysChange.grid(row=1, column=2, padx="5px", columnspan = 2)
+    stockTotalChangeLbl.grid(row=1,column=4,columnspan=2)
+    stockDaysChange.grid(row=1, column=2, padx="5px", columnspan=2)
     #stockDaysChangeOnAccount.grid(row=1, column=3, padx="5px")
     stockCurPrice.grid(row=1, column=1, padx="5px")
 
     #progress bar stuff
     lbl = ImageLabel(progressBar)
     lbl.grid(row=1, column=0)
-    loadinglbl = Label(progressBar, text="Loading Portfolio Please Wait", font=("impact",30),background="black", foreground="white")
+    loadinglbl = Label(progressBar, text="Loading Portfolio Please Wait", font=("impact", 30), background="black", foreground="white")
     loadinglbl.grid(row=0, column=0)
     lbl.load('money.jpg')
     myProgress=ttk.Progressbar(progressBar, orient=HORIZONTAL, length=700, mode='determinate')
     myProgress.grid(row=2,column=0)
     progressBarStep = 100/(len(portfolioDataList)+2)
-    for tist in portfolioDataList:
+    for stockInfoDict in stockObjDict:
         myProgress['value'] += progressBarStep
         progressBar.update()
 
         Source = 0
         #grabs info we need from database and iterates through row stock by stock in the portfolio
         counter=counter+1
-        stockTicker = tist[1]
+        stockTicker = stockInfoDict[1]
         stockTickerList.append(stockTicker)
-        yfStockObj = yf.Ticker(stockTicker)
-        pricePaid = float(tist[2])
-        numberOfShares = float(tist[3])
+        pricePaid = float(sql.getPricePaid(stockTicker, portfolioId)[0])
+        numberOfShares = float(sql.getNumberOfShares(stockTicker, portfolioId)[0])
+        print(stockTicker, numberOfShares, pricePaid)
         #requests info we need from yahoo
-        openPrice = yfStockObj.info['open']
-        currentPrice = yfStockObj.info['currentPrice']
+        openPrice = float(stockInfoDict[0]['previousClose'])
+        currentPrice = float(stockInfoDict[0]['currentPrice'])
         # keeps track of portfolio value
         currentPortfolioValue = (currentPrice*float(numberOfShares))+currentPortfolioValue
         portfolioValueAtOpen = (openPrice*numberOfShares)+portfolioValueAtOpen
@@ -129,14 +149,15 @@ def stockPage(portfolio,username):
     #[ticker,yahooURL,Name]
     indexTist=[['^DJI','https://finance.yahoo.com/quote/%5EDJI?p=%5EDJI','Dow'],['^IXIC','https://finance.yahoo.com/quote/%5EIXIC?p=%5EIXIC','NASDAQ']]
     indexCounter = 0
-    for index in indexTist:
+    indexObjDict
+    for index in indexObjDict:
         indexCounter = indexCounter + 1
-        indexTicker = index[0]
-        indexName = index[2]
-        yahooUrl = index[1]
-        yfIndexObj = yf.Ticker(indexTicker)
-        openPrice = yfIndexObj.info['regularMarketOpen']
-        currentPrice = yfIndexObj.info['regularMarketPrice']
+        #indexTicker = index['symbol']
+        print(index)
+        indexName = index[1]
+        #yfIndexObj = yf.Ticker(indexTicker)
+        openPrice = index[0]['open']
+        currentPrice = index[0]['regularMarketPrice']
 
         daysChange = currentPrice - openPrice
         daysChangePercent = round((daysChange/openPrice)*100,2)
@@ -214,7 +235,8 @@ def stockPage(portfolio,username):
     totalInitialInvestment.grid(row=counter + 2, column=5)
     totalInitialInvestmentLabel = Label(tkinterScroller, text=str(round(totalInitialPortfolioValue,2))+"$", background="black", foreground="gold", font='sans-serif')
     totalInitialInvestmentLabel.grid(row=counter + 3, column=5)
-
+    finish = time.perf_counter()
+    print(f'Finished in {round(finish - start, 2)} seconds')
     #code for Heading for the index table
     indexTickerLabel=Label(tkinterScroller, text="Name",relief=RAISED,font="Cambria")
     indexTickerLabel.grid(row=counter+2,column=0)
