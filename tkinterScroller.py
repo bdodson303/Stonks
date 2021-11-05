@@ -49,7 +49,6 @@ def stockPage(portfolio,username):
             stockObjDict.append(f.result())
         for f in concurrent.futures.as_completed(results2):
             indexObjDict.append(f.result())
-    print(indexObjDict)
     #now we will bubble sort the dictionaries
 
     counter = 1
@@ -128,13 +127,13 @@ def stockPage(portfolio,username):
 
         dayChangeOnAccountLabel.grid(column=3, row=counter)
     refreshButton = ttk.Button(tkinterScroller, text="Refresh", command=refreshButtonClick)
-    refreshButton.grid(column=5, row=0)
+    refreshButton.grid(column=6, row=0)
 
     addStockButton = ttk.Button(tkinterScroller,text="Add Stock", command=addStockButtonClick)
-    addStockButton.grid(column=5,row=1)
+    addStockButton.grid(column=6,row=1)
 
     deleteStockButton = ttk.Button(tkinterScroller,text="Delete Stock", command=deleteStockButtonClick)
-    deleteStockButton.grid(column=5, row=2)
+    deleteStockButton.grid(column=6, row=2)
 
     #code for displaying the current portfolio
     portfolioLabelText = "Current Portfolio:  "+portfolio
@@ -153,7 +152,6 @@ def stockPage(portfolio,username):
     for index in indexObjDict:
         indexCounter = indexCounter + 1
         #indexTicker = index['symbol']
-        print(index)
         indexName = index[1]
         #yfIndexObj = yf.Ticker(indexTicker)
         openPrice = index[0]['open']
@@ -228,13 +226,13 @@ def stockPage(portfolio,username):
                                            background="black", foreground="red", font='sans-serif')
         portfolioDaysChangePercent.grid(row=counter + 3, column=2,columnspan=2)
     totalAccountValueHeading = Label(tkinterScroller, text="Total Portfolio Value", relief=RAISED, font="Cambria",background="yellow")
-    totalAccountValueHeading.grid(row=counter + 4, column=5)
+    totalAccountValueHeading.grid(row=counter + 4, column=6)
     totalAccountValueLabel = Label(tkinterScroller, text=str(round(totalAccountValue,2))+"$", background="black", foreground="gold",font='sans-serif')
-    totalAccountValueLabel.grid(row=counter + 5, column=5)
+    totalAccountValueLabel.grid(row=counter + 5, column=6)
     totalInitialInvestment = Label(tkinterScroller, text="Total Initial Investment", relief=RAISED, font="Cambria",background="yellow")
-    totalInitialInvestment.grid(row=counter + 2, column=5)
+    totalInitialInvestment.grid(row=counter + 2, column=6)
     totalInitialInvestmentLabel = Label(tkinterScroller, text=str(round(totalInitialPortfolioValue,2))+"$", background="black", foreground="gold", font='sans-serif')
-    totalInitialInvestmentLabel.grid(row=counter + 3, column=5)
+    totalInitialInvestmentLabel.grid(row=counter + 3, column=6)
     finish = time.perf_counter()
     print(f'Finished in {round(finish - start, 2)} seconds')
     #code for Heading for the index table
