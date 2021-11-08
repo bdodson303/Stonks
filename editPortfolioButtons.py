@@ -4,6 +4,7 @@ from tkinter import messagebox
 from ttkthemes import themed_tk as tk
 from tkinter import ttk
 from tkinter import messagebox
+import mplfinance as mpf
 import yfinance as yf
 def tickerCheck(ticker):
     test = yf.Ticker(ticker)
@@ -69,4 +70,65 @@ def deleteStockPage(portfolioId,stockTickerList):
     deleteStockSubmitButton = Button(deleteStockPage,command= deleteStockSubmitClick,text='Delete')
     deleteStockSubmitButton.grid(row=2,column=1)
     deleteStockPage.mainloop()
+def createGraphPage(portfolioId,stockTickerList):
+    createGraphPage = tk.ThemedTk()
+    dropDownStrVar = StringVar()
+    dayOYearLengthInputVar = StringVar()
+    dayOYearIntervalInputVar = StringVar()
+    intervalInputVar = StringVar()
+    stylesInputVar = StringVar()
+    periodInputVar = StringVar()
+    stylesList=["classic","charles","mike","blueskies","starsandstripes","brasil","yahoo"]
+    def submitButtonClick():
+        timeInputDictionary={"Days":"d","Years":"y","Months":"m","Hours":"h","Weeks":"wk"}
+        supportedIntervals=["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]
+        kwargs = dict(type='candle', mav=(2, 4, 6), volume=True, figratio=(11, 8), figscale=0.85)
+        period=periodInputVar.get()
+        periodDayOrYear=dayOYearLengthInputVar.get()
+        interval=intervalInputVar.get()
+        #interval=2d is not supported. Valid intervals:
+        intervalDayOrYear=dayOYearIntervalInputVar.get()
+        periodCombinedInput = period + timeInputDictionary[periodDayOrYear]
+        print(periodCombinedInput)
+        time = "100" + "d"
+        try:
+            int(period)
+        except:
+            messagebox.showerror("ERROR","please only enter integers")
+        yfTicker = yf.Ticker(dropDown.get())
+        yfTickerHist = yfTicker.history(period=periodCombinedInput, interval=interval)
+        print(periodCombinedInput,interval)
 
+        mpf.plot(yfTickerHist, **kwargs, style=stylesInputVar.get())
+
+    #['MNST', 'MUX', 'SAN', 'INTC', 'TSM', 'F', 'AMD', 'CRSR']
+
+    dropDownStrVar.set(stockTickerList[0])
+    dropDown = ttk.Combobox(createGraphPage, value=stockTickerList)
+    submitButton = ttk.Button(createGraphPage, text="Submit", command=submitButtonClick)
+    header = ttk.Label(createGraphPage,text="Please input info for graph",font="sans-serif")
+    tickerLabel = ttk.Label(createGraphPage,text="Ticker")
+    lengthLabel = ttk.Label(createGraphPage,text="Period(int)")
+    intervalLabel = ttk.Label(createGraphPage, text="Interval")
+    styleLabel = ttk.Label(createGraphPage, text="Styles")
+    periodInput=ttk.Entry(createGraphPage, width=6, textvariable=periodInputVar)
+    dayOrYearLengthInput=ttk.OptionMenu(createGraphPage,dayOYearLengthInputVar,"Years",*["Days","Years"])
+    intervalInput = ttk.OptionMenu(createGraphPage, intervalInputVar,"1d",*["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"])
+    stylesInput = ttk.OptionMenu(createGraphPage, stylesInputVar,"mike",*stylesList)
+
+
+    dropDown.current(0)
+    intervalLabel.grid(row=4, column=1, sticky="w",padx="2px")
+    dropDown.grid(row=2,column=2, columnspan=2)
+    tickerLabel.grid(row=2, column=1, sticky="w",padx="2px")
+    lengthLabel.grid(row=3, column=1, sticky="w",padx="2px")
+    submitButton.grid(row=6, column=2,columnspan=2)
+    intervalInput.grid(row=4, column=2, columnspan=2)
+    stylesInput.grid(row=5, column=2, columnspan=2)
+    styleLabel.grid(row=5, column=1, sticky="w",padx="2px")
+    header.grid(row=0,column=1,rowspan=2, columnspan=3, padx="10px")
+    periodInput.grid(row=3, column=2)
+    dayOrYearLengthInput.grid(row=3, column=3)
+
+
+    createGraphPage.mainloop()

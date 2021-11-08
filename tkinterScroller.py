@@ -23,15 +23,18 @@ def stockPage(portfolio,username):
     tkinterScroller.config(background="black")
     stockTickerList = []
     portfolioId = username + "-" + portfolio
+    refreshFlag=0
     def refreshButtonClick():
         tkinterScroller.destroy()
         stockPage(portfolio,username)
     def addStockButtonClick():
         editPortfolioButtons.addStockPage(portfolioId, stockTickerList)
-        refreshButtonClick()
+        tkinterScroller.destroy()
     def deleteStockButtonClick():
         editPortfolioButtons.deleteStockPage(portfolioId,stockTickerList)
-        refreshButtonClick()
+    def createGraphButtonClick():
+        editPortfolioButtons.createGraphPage(portfolioId, stockTickerList)
+
     portfolioDataList= sql.getAllStockPortfolioData(portfolioId,'no')
     #want to grab all data here and then send it into the label printing loop
     #we also want to bubble sort it so our list is ordered from worst performing to best
@@ -40,7 +43,9 @@ def stockPage(portfolio,username):
     indexList=['^DJI','^IXIC']
     def grabOpenAndClose(ticker):
         stockInfo = yf.Ticker(ticker).info
-        return [stockInfo,ticker]
+        chngPercent = (stockInfo['regularMarketPrice']-stockInfo['previousClose'])/stockInfo['previousClose']
+        print(ticker, chngPercent)
+        return [stockInfo,ticker, chngPercent]
     with concurrent.futures.ThreadPoolExecutor() as executor:
         results = [executor.submit(grabOpenAndClose, stock[1]) for stock in portfolioDataList]
         results2 = [executor.submit(grabOpenAndClose, index) for index in indexList]
@@ -50,7 +55,20 @@ def stockPage(portfolio,username):
         for f in concurrent.futures.as_completed(results2):
             indexObjDict.append(f.result())
     #now we will bubble sort the dictionaries
+    n = len(stockObjDict)
 
+    # Traverse through all array elements
+    for i in range(n - 1):
+        # range(n) also work but outer loop will repeat one time more than needed.
+
+        # Last i elements are already in place
+        for j in range(0, n - i - 1):
+
+            # traverse the array from 0 to n-i-1
+            # Swap if the element found is greater
+            # than the next element
+            if stockObjDict[j][2] < stockObjDict[j + 1][2]:
+                stockObjDict[j], stockObjDict[j + 1] = stockObjDict[j + 1], stockObjDict[j]
     counter = 1
     currentPortfolioValue = float(0)
     totalAccountValue = 0
@@ -103,6 +121,9 @@ def stockPage(portfolio,username):
         daysChangePercent = round((daysChange/openPrice)*100,2)
         daysChangeOnAccount = float(daysChange) * float(numberOfShares)
 
+        totalChangeOnAccount = (currentPrice*numberOfShares)-(pricePaid*numberOfShares)
+        totalChangeOnAccountPercent = (totalChangeOnAccount/(pricePaid*numberOfShares))*100
+
         currPriceLabel = ttk.Label(tkinterScroller, text=currentPrice, font='sans-serif', foreground="white", background="black")
         currPriceLabel.grid(column=1, row=counter)
 
@@ -114,6 +135,15 @@ def stockPage(portfolio,username):
 
         stockTickerLabel = ttk.Label(tkinterScroller, text=stockTicker, foreground="#F300FF", background="black", font="georgia")
         stockTickerLabel.grid(column=0, row=counter)
+        #code for diplaying total $ change on account
+        if totalChangeOnAccount > 0:
+            totalChangeOnAccountLbl = ttk.Label(tkinterScroller, text=str(round(totalChangeOnAccount, 2))+"$", font='sans-serif',background="black",foreground="green")
+            totalChangeOnAccountPercentLbl = ttk.Label(tkinterScroller, text=str(round(totalChangeOnAccountPercent, 2))+"%", font='sans-serif',background="black",foreground="green")
+        elif totalChangeOnAccount < 0:
+            totalChangeOnAccountLbl = ttk.Label(tkinterScroller, text=str(round(totalChangeOnAccount, 2))+"$", font='sans-serif',background="black",foreground="red")
+            totalChangeOnAccountPercentLbl = ttk.Label(tkinterScroller, text=str(round(totalChangeOnAccountPercent, 2))+"%", font='sans-serif',background="black",foreground="red")
+        totalChangeOnAccountLbl.grid(row=counter, column=4)
+        totalChangeOnAccountPercentLbl.grid(row=counter, column=5)
         # code for diplaying days change and days change on account the if statment makes it green if its greater than 0
         if daysChangePercent >= 0:
             dayChangeLabel = ttk.Label(tkinterScroller, text=str(daysChangePercent)+"%", font='sans-serif',background="black",foreground="green")
@@ -134,6 +164,9 @@ def stockPage(portfolio,username):
 
     deleteStockButton = ttk.Button(tkinterScroller,text="Delete Stock", command=deleteStockButtonClick)
     deleteStockButton.grid(column=6, row=2)
+
+    createGraphButton = ttk.Button(tkinterScroller, text="Create Graph", command=createGraphButtonClick)
+    createGraphButton.grid(column=6, row=3)
 
     #code for displaying the current portfolio
     portfolioLabelText = "Current Portfolio:  "+portfolio
@@ -188,29 +221,29 @@ def stockPage(portfolio,username):
                                       background="yellow")
     portfolioDayChangeHeading.grid(row=counter + 4, column=2,columnspan=2)
     portfolioTotalChangeLabel = Label(tkinterScroller, text="Total Account Change $", relief=RAISED, font="Cambria", background="yellow")
-    portfolioTotalChangeLabel.grid(row=counter + 4, column=4)
+    portfolioTotalChangeLabel.grid(row=counter + 4, column=4, columnspan=2)
 
     portfolioTotalChangePercentLabel = Label(tkinterScroller, text="Total Account Change %", relief=RAISED, font="Cambria",
                                       background="yellow")
-    portfolioTotalChangePercentLabel.grid(row=counter + 2, column=4)
+    portfolioTotalChangePercentLabel.grid(row=counter + 2, column=4, columnspan=2)
 
     if totalAccountChangePercent >=0:
         totalAccountChangePercentValue =Label(tkinterScroller, text=str(round(totalAccountChangePercent,2))+"%", background="black", foreground="green",font='sans-serif')
-        totalAccountChangePercentValue.grid(row=counter + 3, column=4)
+        totalAccountChangePercentValue.grid(row=counter + 3, column=4, columnspan=2)
     elif totalAccountChangePercent < 0:
         totalAccountChangePercentValue = Label(tkinterScroller, text=str(round(totalAccountChangePercent, 2)) + "%",
                                                background="black", foreground="red", font='sans-serif')
-        totalAccountChangePercentValue.grid(row=counter + 3, column=4)
+        totalAccountChangePercentValue.grid(row=counter + 3, column=4, columnspan=2)
 
 
 
     if totalAccountChange >=0:
         totalAccountChangeValue =Label(tkinterScroller, text=str(round(totalAccountChange,2))+"$", background="black", foreground="green",font='sans-serif')
-        totalAccountChangeValue.grid(row=counter + 5, column=4)
+        totalAccountChangeValue.grid(row=counter + 5, column=4, columnspan=2)
     elif totalAccountChange < 0:
         totalAccountChangeValue = Label(tkinterScroller, text=str(round(totalAccountChange, 2)) + "$",
                                         background="black", foreground="green", font='sans-serif')
-        totalAccountChangeValue.grid(row=counter + 5, column=4)
+        totalAccountChangeValue.grid(row=counter + 5, column=4, columnspan=2)
     if accountDaysChange >=0:
         portfolioDaysChange =Label(tkinterScroller, text=str(round(accountDaysChange,2))+"$", background="black", foreground="green",font='sans-serif')
         portfolioDaysChange.grid(row=counter + 5, column=2,columnspan=2)
@@ -246,4 +279,4 @@ def stockPage(portfolio,username):
     progressBar.destroy()
     progressBar.mainloop()
     tkinterScroller.mainloop()
-stockPage('Ben','bld029914')
+stockPage("Ben", "bld029914")
