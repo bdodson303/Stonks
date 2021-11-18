@@ -279,4 +279,3 @@ def stockPage(portfolio,username):
     progressBar.destroy()
     progressBar.mainloop()
     tkinterScroller.mainloop()
-stockPage("Ben", "bld029914")

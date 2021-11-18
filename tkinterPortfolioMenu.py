@@ -72,7 +72,10 @@ def portfolioMenu(username):
             openPortfolioPageSelectButton.grid(row=str(portfolioCounter + 2), column="1")
         elif submitButtonReturn == 3:
             #Delete a Portfolio
-            print('hi')
+            deletePortfolioPage=Toplevel()
+            deletePortfolioPage.iconbitmap('BD(2).ico')
+
+            deletePortfolioPage.mainloop()
         elif submitButtonReturn == 4:
             #Exit to login screen
             print('hi')
